@@ -7,3 +7,5 @@
 2. 预训练模型这里采用了[bert-base-chinese](https://huggingface.co/bert-base-chinese)，下载后放到pretrain文件中
 
 3. 直接运行run_main.py文件即可，参数的解释已经在代码中给出
+
+4. 训练了2个epoch，提交之后的F1：0.82849
