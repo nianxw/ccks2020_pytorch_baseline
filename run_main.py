@@ -46,7 +46,7 @@ def main():
 
     parser.add_argument("--epochs", default=2, type=int, help="Number of epoches for fine-tuning.")
     parser.add_argument("--train_batch_size", default=128, type=int, help="Total examples' number in batch for training.")
-    parser.add_argument("--eval_batch_size", default=8, type=int, help="Total examples' number in batch for eval.")
+    parser.add_argument("--eval_batch_size", default=64, type=int, help="Total examples' number in batch for eval.")
     parser.add_argument("--max_seq_len", default=128, type=int, help="Number of words of the longest seqence.")
     parser.add_argument("--learning_rate", default=5e-5, type=float, help="Learning rate used to train with warmup.")
     parser.add_argument("--warmup_proportion", default=0.1,

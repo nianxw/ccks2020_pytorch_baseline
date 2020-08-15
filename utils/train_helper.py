@@ -79,18 +79,6 @@ def train(tokenizer, config, args, train_data_set, eval_data_set=None):
     steps = 0
     sentence_encoder = BertModel.from_pretrained(args.init_checkpoint, config=config)
     model = type_pair_rank.TypePairRank(sentence_encoder, args)
-    if args.load_path is not None and os.path.exists(args.load_path):
-        ckpt = args.load_path
-        steps = int(re.search("\d+", ckpt).group())
-        checkpoint = torch.load(ckpt)
-        state_dict = checkpoint["state_dict"]
-        own_state = model.state_dict()
-        for name, param in state_dict.items():
-            name = name.replace("module.", "")
-            if name not in own_state:
-                continue
-            own_state[name].copy_(param)
-        logger.info("Successfully loaded checkpoint '%s'" % ckpt)
 
     if args.use_cuda:
         model.cuda()
@@ -98,6 +86,19 @@ def train(tokenizer, config, args, train_data_set, eval_data_set=None):
             model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.local_rank])
         else:
             model = nn.DataParallel(model)
+
+    if args.load_path is not None and os.path.exists(args.load_path):
+        ckpt = args.load_path
+        # steps = int(re.search("\d+", ckpt).group())
+        checkpoint = torch.load(ckpt)
+        state_dict = checkpoint["state_dict"]
+        own_state = model.state_dict()
+        for name, param in state_dict.items():
+            # name = name.replace("module.", "")
+            if name not in own_state:
+                continue
+            own_state[name].copy_(param)
+        logger.info("Successfully loaded checkpoint '%s'" % ckpt)
 
     # prepare optimizer
     parameters_to_optimize = list(model.named_parameters())
@@ -159,7 +160,7 @@ def train(tokenizer, config, args, train_data_set, eval_data_set=None):
                 log_acc = 0.0
                 log_f1 = 0.0
 
-            if steps % args.validation_steps == 0 or (epoch == (args.epochs - 1)):
+            if steps % args.validation_steps == 0:
                 if args.do_eval:
                     model.eval()
 
@@ -203,24 +204,24 @@ def test(tokenizer, config, args, dataset):
 
     sentence_encoder = BertModel(config=config)
     model = type_pair_rank.TypePairRank(sentence_encoder, args)
+    if args.use_cuda:
+        model = nn.DataParallel(model)
+        model.cuda()
 
     ckpt = args.load_path
     state_dict = torch.load(ckpt)["state_dict"]
     own_state = model.state_dict()
     for name, param in state_dict.items():
-        name = name.replace("module.", "")
+        # name = name.replace("module.", "")
         if name not in own_state:
             continue
         own_state[name].copy_(param)
     logger.info("Successfully loaded checkpoint '%s'" % ckpt)
-    # logger.info("Test model loaded")
 
     test_data_loader = DataLoader(dataset=dataset,
                                   batch_size=args.eval_batch_size,
                                   num_workers=8,
                                   collate_fn=data_helper.collate_fn)
-    if args.use_cuda:
-        model.cuda()
 
     logger.info("***** Running predicting *****")
     logger.info("  Num examples = %d", len(dataset))
